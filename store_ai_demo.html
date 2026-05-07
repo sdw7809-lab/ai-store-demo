@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI 기반 점포 컨설팅 시스템 데모</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: Arial, 'Noto Sans KR', sans-serif; background: #f4f7fb; color: #162033; }
+    header { background: #061a3a; color: white; padding: 22px 36px; }
+    header h1 { margin: 0; font-size: 28px; }
+    header p { margin: 8px 0 0; color: #c8d6f0; }
+    .wrap { display: grid; grid-template-columns: 420px 1fr; gap: 24px; padding: 24px; }
+    .card { background: white; border: 1px solid #dce5f2; border-radius: 16px; padding: 22px; box-shadow: 0 4px 12px rgba(6,26,58,.05); }
+    h2 { font-size: 20px; margin: 0 0 16px; color: #061a3a; }
+    h3 { font-size: 16px; margin: 16px 0 10px; }
+    label { display: block; font-size: 14px; font-weight: 700; margin: 14px 0 6px; }
+    select, input { width: 100%; padding: 11px 12px; border: 1px solid #cbd5e1; border-radius: 10px; font-size: 14px; }
+    button { width: 100%; margin-top: 20px; padding: 14px; border: 0; border-radius: 12px; background: #175cff; color: white; font-weight: 800; font-size: 16px; cursor: pointer; }
+    button:hover { background: #0b49d1; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .metric { background: #f8fbff; border: 1px solid #dce5f2; border-radius: 14px; padding: 16px; }
+    .metric strong { display: block; font-size: 24px; color: #061a3a; margin-top: 8px; }
+    .badge { display: inline-block; padding: 5px 10px; border-radius: 999px; background: #e9f2ff; color: #175cff; font-size: 12px; font-weight: 800; }
+    .danger { background: #fff0f0; color: #d92d20; }
+    .warning { background: #fff8e6; color: #b45309; }
+    .success { background: #e8f8ef; color: #087443; }
+    .section { margin-top: 20px; }
+    .reference { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .ref-card { border: 1px solid #dce5f2; border-radius: 14px; padding: 16px; background: #fff; }
+    .ref-card.best { border: 2px solid #175cff; background: #f7faff; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { border-bottom: 1px solid #e5eaf2; padding: 10px; text-align: left; vertical-align: top; }
+    th { background: #f8fbff; color: #344054; }
+    ul { margin: 8px 0 0 20px; padding: 0; }
+    li { margin: 6px 0; }
+    .zone { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    .zone div { border-radius: 14px; padding: 16px; background: #f8fbff; border: 1px solid #dce5f2; }
+    .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .photo-item { border: 1px solid #dce5f2; border-radius: 14px; padding: 12px; background: #fbfdff; }
+    .photo-item input { padding: 8px; background: white; }
+    .preview { margin-top: 8px; width: 100%; height: 92px; border-radius: 10px; object-fit: cover; display: none; border: 1px solid #dce5f2; }
+    .analysis-box { background: #f8fbff; border: 1px solid #dce5f2; border-radius: 14px; padding: 14px; margin-top: 12px; }
+    .footer-note { margin-top: 20px; padding: 14px; background: #fffbe6; border: 1px solid #f7d774; border-radius: 12px; font-size: 13px; color: #664d03; }
+    @media(max-width: 1100px){ .wrap{ grid-template-columns: 1fr; } .grid,.zone,.reference,.photo-grid{ grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>AI 기반 점포 컨설팅 시스템 데모</h1>
+    <p>매출 데이터 + 상권 정보 + 점포 사진 분석 + 우수점포 레퍼런스를 결합한 컨설팅 초안 생성</p>
+  </header>
+
+  <main class="wrap">
+    <section class="card">
+      <h2>1. 기본 정보 입력</h2>
+      <label>점포명</label>
+      <input id="storeName" value="송도 센트럴점" />
+      <label>상권 유형</label>
+      <select id="market">
+        <option value="mixed">주거 + 상업 혼합</option>
+        <option value="residential">주거</option>
+        <option value="commercial">상업</option>
+      </select>
+      <label>면적</label>
+      <input id="size" value="32평" />
+      <label>일평균 매출</label>
+      <input id="sales" type="number" value="2100000" />
+      <label>객수</label>
+      <input id="customers" type="number" value="180" />
+      <label>관리수준</label>
+      <select id="level">
+        <option value="bad">미흡</option>
+        <option value="normal">보통</option>
+        <option value="good">우수</option>
+      </select>
+
+      <h2 style="margin-top:26px;">2. 사진 업로드</h2>
+      <div class="photo-grid" id="photoInputs"></div>
+      <button onclick="runConsulting()">사진 기반 AI 컨설팅 초안 생성</button>
+    </section>
+
+    <section>
+      <div class="card">
+        <h2>3. 매출 구조 진단</h2>
+        <div class="grid">
+          <div class="metric">일평균 매출<strong id="salesView">210만원</strong></div>
+          <div class="metric">객수<strong id="customerView">180명</strong></div>
+          <div class="metric">객단가<strong id="priceView">11,600원</strong></div>
+        </div>
+        <div class="section">
+          <span class="badge danger" id="diagnosisBadge">객단가 개선 필요</span>
+          <p id="diagnosisText">사진과 매출 데이터를 기반으로 진단 결과가 생성됩니다.</p>
+        </div>
+      </div>
+
+      <div class="card section">
+        <h2>4. 사진 기반 자동 분석 결과</h2>
+        <table>
+          <thead><tr><th>분석 영역</th><th>AI 판정</th><th>주요 관찰 내용</th></tr></thead>
+          <tbody id="photoAnalysisRows"></tbody>
+        </table>
+      </div>
+
+      <div class="card section">
+        <h2>5. 유사 우수 레퍼런스 매칭</h2>
+        <div id="referenceArea" class="reference"></div>
+      </div>
+
+      <div class="card section">
+        <h2>6. 개선 전략 제안</h2>
+        <table>
+          <thead><tr><th>영역</th><th>현재 문제</th><th>개선 방향</th></tr></thead>
+          <tbody id="strategyRows"></tbody>
+        </table>
+      </div>
+
+      <div class="card section">
+        <h2>7. 내부 진열 Zone 제안</h2>
+        <div class="zone" id="zoneArea"></div>
+      </div>
+
+      <div class="card section">
+        <h2>8. 실행 액션 플랜</h2>
+        <ul id="actionList"></ul>
+        <div class="footer-note">본 데모는 더미 레퍼런스 데이터와 사진 분석 시뮬레이션을 기반으로 한 컨설팅 초안입니다. 실제 구현 시 Gemini Vision 등 이미지 분석 모델을 연결해 사진별 체크리스트를 자동 판정합니다.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const photoCategories = [
+      { id: 'exterior', name: '외관 / 홍보물 관리' },
+      { id: 'center', name: '중앙매대' },
+      { id: 'coldFlat', name: '냉장평대 쇼케이스' },
+      { id: 'cake', name: '케이크 쇼케이스' },
+      { id: 'drink', name: '음료 쇼케이스' },
+      { id: 'freezer', name: '냉동고' },
+      { id: 'wall', name: '벽면매대' }
+    ];
+
+    const references = [
+      { name: '동탄 파크점', type: 'residential', label: '주거형 우수점포', sales: 2400000, customers: 180, ticket: 13300, score: 87, points: ['대용량 + 세트 상품 강화', '가족 단위 구매 구조', '카테고리 정리 우수'] },
+      { name: '강남 메인점', type: 'commercial', label: '상업형 우수점포', sales: 2500000, customers: 200, ticket: 12500, score: 83, points: ['빠른 구매 동선', '행사 상품 전면 노출', '음료 + 디저트 연계'] },
+      { name: '판교 테크점', type: 'mixed', label: '혼합형 우수점포', sales: 2500000, customers: 170, ticket: 14700, score: 91, points: ['한입제품 + 고마진 상품 혼합', '세트 구성 강화', 'POS 충동구매 최적화'] }
+    ];
+
+    const money = n => Math.round(n / 10000).toLocaleString() + '만원';
+    const won = n => Math.round(n).toLocaleString() + '원';
+
+    function initPhotoInputs() {
+      const box = document.getElementById('photoInputs');
+      box.innerHTML = photoCategories.map(c => `
+        <div class="photo-item">
+          <label>${c.name}</label>
+          <input type="file" accept="image/*" onchange="previewImage(event, '${c.id}')" />
+          <img id="preview-${c.id}" class="preview" />
+        </div>
+      `).join('');
+    }
+
+    function previewImage(event, id) {
+      const file = event.target.files[0];
+      const img = document.getElementById('preview-' + id);
+      if (!file) return;
+      img.src = URL.createObjectURL(file);
+      img.style.display = 'block';
+    }
+
+    function simulatedPhotoAnalysis(level) {
+      const byLevel = {
+        bad: {
+          badge: '미흡', cls: 'danger',
+          rows: [
+            ['외관 / 홍보물', '미흡', '홍보물 위치가 분산되어 프로모션 메시지 전달력이 낮음'],
+            ['중앙매대', '보통', '베스트 상품 집중도는 있으나 세트 상품 노출이 약함'],
+            ['냉장평대 쇼케이스', '미흡', '전략 상품과 일반 상품이 혼재되어 선택 편의성이 낮음'],
+            ['케이크 쇼케이스', '보통', '상품 구색은 유지되나 추천 상품 강조가 부족함'],
+            ['음료 쇼케이스', '미흡', '디저트 연계 구매를 유도하는 배치가 부족함'],
+            ['냉동고', '보통', '카테고리 구분은 가능하나 시선 유도 요소가 부족함'],
+            ['벽면매대', '미흡', '카테고리별 정리가 약해 탐색 효율이 낮음']
+          ]
+        },
+        normal: {
+          badge: '보통', cls: 'warning',
+          rows: [
+            ['외관 / 홍보물', '보통', '기본 관리는 되어 있으나 핵심 행사 노출이 약함'],
+            ['중앙매대', '보통', '베스트 상품 중심이나 세트 구성 강화 필요'],
+            ['냉장평대 쇼케이스', '보통', '상품 정리는 양호하나 전략 상품 강조 부족'],
+            ['케이크 쇼케이스', '우수', '시인성과 구색 관리가 양호함'],
+            ['음료 쇼케이스', '보통', '연계 진열 보완 필요'],
+            ['냉동고', '보통', '기본 카테고리 정리 수준'],
+            ['벽면매대', '보통', '카테고리 정리 개선 여지 있음']
+          ]
+        },
+        good: {
+          badge: '우수', cls: 'success',
+          rows: [
+            ['외관 / 홍보물', '우수', '표준 홍보물 위치 준수 및 메시지 명확'],
+            ['중앙매대', '우수', '베스트/세트 상품 집중도가 높음'],
+            ['냉장평대 쇼케이스', '우수', '카테고리 구분과 전략 상품 노출이 명확'],
+            ['케이크 쇼케이스', '우수', '추천 상품 강조 및 구색 관리 우수'],
+            ['음료 쇼케이스', '보통', '연계 구매 메시지 추가 시 개선 가능'],
+            ['냉동고', '우수', '카테고리 구분 명확'],
+            ['벽면매대', '우수', '고객 탐색 편의성이 높음']
+          ]
+        }
+      };
+      return byLevel[level];
+    }
+
+    function runConsulting() {
+      const market = document.getElementById('market').value;
+      const sales = Number(document.getElementById('sales').value);
+      const customers = Number(document.getElementById('customers').value);
+      const level = document.getElementById('level').value;
+      const ticket = sales / customers;
+      const analysis = simulatedPhotoAnalysis(level);
+
+      document.getElementById('salesView').innerText = money(sales);
+      document.getElementById('customerView').innerText = customers.toLocaleString() + '명';
+      document.getElementById('priceView').innerText = won(ticket);
+      const badge = document.getElementById('diagnosisBadge');
+      badge.className = 'badge ' + (ticket < 12500 ? 'danger' : 'warning');
+      badge.innerText = ticket < 12500 ? '객단가 개선 필요' : '운영 효율 개선 필요';
+
+      const marketName = market === 'mixed' ? '주거+상업 혼합' : market === 'residential' ? '주거' : '상업';
+      document.getElementById('diagnosisText').innerText = `${marketName} 상권 기준, 현재 객단가는 ${won(ticket)}입니다. 사진 분석 결과 ${analysis.badge} 수준의 관리 영역이 확인되며, 특히 전략 상품 노출·음료 연계 구매·벽면 카테고리 정리 개선이 필요합니다.`;
+
+      document.getElementById('photoAnalysisRows').innerHTML = analysis.rows.map(r => `<tr><td>${r[0]}</td><td><span class="badge ${r[1] === '미흡' ? 'danger' : r[1] === '보통' ? 'warning' : 'success'}">${r[1]}</span></td><td>${r[2]}</td></tr>`).join('');
+
+      const best = references.slice().sort((a,b) => (a.type === market ? -20 : 0) + b.score - ((b.type === market ? -20 : 0) + a.score))[0];
+      renderReferences(best);
+      renderStrategies(level);
+      renderZones();
+      renderActions(level);
+    }
+
+    function renderReferences(best) {
+      document.getElementById('referenceArea').innerHTML = references.map(r => `
+        <div class="ref-card ${r.name === best.name ? 'best' : ''}">
+          <span class="badge ${r.name === best.name ? 'success' : ''}">${r.name === best.name ? '최적 매칭' : r.label}</span>
+          <h3>${r.name}</h3>
+          <p><b>일평균 매출</b> ${money(r.sales)} / <b>객수</b> ${r.customers}명 / <b>객단가</b> ${won(r.ticket)}</p>
+          <p><b>유사도</b> ${r.score}%</p>
+          <ul>${r.points.map(p => `<li>${p}</li>`).join('')}</ul>
+        </div>`).join('');
+    }
+
+    function renderStrategies(level) {
+      const rows = [
+        ['외관', '홍보물 메시지 전달력 약함', '표준 홍보물 위치 기준에 맞춰 핵심 행사물 재배치'],
+        ['중앙매대', '세트 상품 집중도 부족', '베스트 + 세트 상품 중심으로 재구성'],
+        ['냉장평대 쇼케이스', '전략상품과 일반상품 혼재', '전략 상품 전면 배치 및 카테고리 구획 정리'],
+        ['케이크 쇼케이스', '추천 상품 강조 부족', '시즌/예약 추천 상품 POP 강화'],
+        ['음료 쇼케이스', '디저트 연계 구매 약함', '커피/음료와 디저트 세트 구매 메시지 부착'],
+        ['냉동고', '시선 유도 부족', '베스트 냉동 상품 전면 노출 및 가격 라벨 정리'],
+        ['벽면매대', '카테고리 정리 미흡', '식사빵/간식빵/선물류 기준으로 구획 재정리']
+      ];
+      document.getElementById('strategyRows').innerHTML = rows.map(r => `<tr><td>${r[0]}</td><td>${r[1]}</td><td><b>${r[2]}</b></td></tr>`).join('');
+    }
+
+    function renderZones() {
+      const zones = [
+        ['Zone A 입구', '행사 홍보물과 한입제품을 전면 배치해 첫 시선 구매 유도'],
+        ['Zone B 중앙', '베스트 상품과 커피/디저트 세트 상품을 집중 구성'],
+        ['Zone C 쇼케이스', '냉장평대·케이크·음료 쇼케이스를 연계 구매 흐름으로 정리'],
+        ['Zone D 벽면/POS', '벽면 카테고리 정리 후 POS 주변 소형 상품으로 추가 구매 유도']
+      ];
+      document.getElementById('zoneArea').innerHTML = zones.map(z => `<div><h3>${z[0]}</h3><p>${z[1]}</p></div>`).join('');
+    }
+
+    function renderActions(level) {
+      const actions = [
+        '외관 홍보물 위치를 표준 위치 기준에 맞춰 재배치',
+        '중앙매대에 베스트 상품 + 세트 상품 2종 집중 구성',
+        '냉장평대 쇼케이스에서 전략 상품을 고객 동선상 1차 노출 구간에 배치',
+        '음료 쇼케이스에 디저트 연계 구매 메시지 추가',
+        '벽면매대를 식사빵/간식빵/선물류 기준으로 재정리',
+        '2주간 객단가와 세트 판매 비중 변화를 추적'
+      ];
+      document.getElementById('actionList').innerHTML = actions.map(a => `<li>${a}</li>`).join('');
+    }
+
+    initPhotoInputs();
+    runConsulting();
+  </script>
+</body>
+</html>
