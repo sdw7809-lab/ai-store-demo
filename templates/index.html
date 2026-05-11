@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>AI 점포 컨설팅 시스템</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial;
+}
+
+body{
+    background:#f4f7fb;
+    color:#111827;
+}
+
+.layout{
+    display:flex;
+}
+
+/* 사이드바 */
+
+.sidebar{
+    width:260px;
+    min-height:100vh;
+    background:#061b44;
+    color:white;
+    padding:28px 20px;
+}
+
+.logo{
+    font-size:28px;
+    font-weight:bold;
+    margin-bottom:40px;
+}
+
+.menu{
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+}
+
+.menu div{
+    padding:14px;
+    border-radius:12px;
+    background:rgba(255,255,255,0.06);
+}
+
+.menu .active{
+    background:#175cff;
+}
+
+.bottom-box{
+    margin-top:40px;
+    background:rgba(255,255,255,0.05);
+    padding:18px;
+    border-radius:14px;
+    font-size:13px;
+    line-height:1.6;
+}
+
+/* 메인 */
+
+.main{
+    flex:1;
+    padding:30px;
+}
+
+.top-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:24px;
+}
+
+.store-title{
+    font-size:42px;
+    font-weight:bold;
+}
+
+.store-meta{
+    display:flex;
+    gap:10px;
+    margin-top:12px;
+}
+
+.badge{
+    background:#edf4ff;
+    color:#175cff;
+    padding:7px 12px;
+    border-radius:999px;
+    font-size:13px;
+    font-weight:bold;
+}
+
+.top-buttons{
+    display:flex;
+    gap:12px;
+}
+
+.btn{
+    padding:13px 18px;
+    border-radius:12px;
+    border:1px solid #dbe3f0;
+    background:white;
+    cursor:pointer;
+}
+
+.btn.primary{
+    background:#061b44;
+    color:white;
+    border:none;
+}
+
+/* 카드 */
+
+.card{
+    background:white;
+    border-radius:20px;
+    border:1px solid #dbe3f0;
+    padding:24px;
+    margin-bottom:22px;
+}
+
+/* 상단 요약 */
+
+.summary-grid{
+    display:grid;
+    grid-template-columns:1.1fr 1fr 1fr;
+    gap:24px;
+}
+
+.score-big{
+    font-size:92px;
+    font-weight:bold;
+    color:#f59e0b;
+}
+
+.level{
+    color:#f59e0b;
+    font-weight:bold;
+    font-size:34px;
+}
+
+.desc{
+    margin-top:16px;
+    color:#6b7280;
+    line-height:1.7;
+}
+
+.score-bars{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+}
+
+.bar-row{
+    display:grid;
+    grid-template-columns:130px 1fr 60px 50px;
+    align-items:center;
+    gap:10px;
+}
+
+.bar{
+    height:10px;
+    border-radius:999px;
+    background:#e5e7eb;
+    overflow:hidden;
+}
+
+.bar-fill{
+    height:100%;
+    border-radius:999px;
+}
+
+/* TOP3 */
+
+.top3{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:18px;
+}
+
+.top-item{
+    border:1px solid #dbe3f0;
+    border-radius:16px;
+    padding:20px;
+}
+
+.top-rank{
+    width:34px;
+    height:34px;
+    border-radius:50%;
+    background:#ef4444;
+    color:white;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    margin-bottom:14px;
+}
+
+.top-score{
+    font-size:44px;
+    font-weight:bold;
+    color:#ef4444;
+}
+
+/* 상세 */
+
+.detail-grid{
+    display:grid;
+    grid-template-columns:320px 1fr 1fr 1fr;
+    gap:18px;
+}
+
+.detail-left{
+    border:1px solid #f0d3d3;
+    background:#fff5f5;
+    border-radius:18px;
+    padding:26px;
+}
+
+.detail-score{
+    font-size:84px;
+    font-weight:bold;
+    color:#ef4444;
+}
+
+.detail-level{
+    display:inline-block;
+    margin-top:10px;
+    padding:10px 20px;
+    border-radius:999px;
+    background:#fee2e2;
+    color:#ef4444;
+    font-weight:bold;
+}
+
+.table{
+    width:100%;
+}
+
+.table table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.table th,
+.table td{
+    padding:12px;
+    border-bottom:1px solid #e5e7eb;
+    text-align:left;
+}
+
+.issue{
+    margin-bottom:22px;
+}
+
+.issue-title{
+    font-weight:bold;
+    color:#ef4444;
+    margin-bottom:6px;
+}
+
+.ref-item{
+    margin-bottom:14px;
+    color:#10b981;
+    font-weight:bold;
+}
+
+/* 사진 비교 */
+
+.photo-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:18px;
+}
+
+.photo-box{
+    background:white;
+    border:1px solid #dbe3f0;
+    border-radius:18px;
+    overflow:hidden;
+}
+
+.photo-box img{
+    width:100%;
+    height:300px;
+    object-fit:cover;
+}
+
+.photo-content{
+    padding:18px;
+}
+
+.photo-title{
+    font-size:20px;
+    font-weight:bold;
+    margin-bottom:12px;
+}
+
+.red{
+    color:#ef4444;
+}
+
+.green{
+    color:#10b981;
+}
+
+.blue{
+    color:#175cff;
+}
+
+.photo-content ul{
+    padding-left:18px;
+    line-height:1.8;
+}
+
+/* 하단 */
+
+.bottom-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+}
+
+.action-box{
+    border-radius:18px;
+    padding:20px;
+}
+
+.green-box{
+    background:#ecfdf5;
+}
+
+.blue-box{
+    background:#eff6ff;
+}
+
+.action-title{
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:16px;
+}
+
+.action-box ul{
+    padding-left:20px;
+    line-height:2;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="layout">
+
+    <!-- 사이드바 -->
+
+    <div class="sidebar">
+
+        <div class="logo">
+            AI 기반<br>점포 컨설팅 시스템
+        </div>
+
+        <div class="menu">
+            <div class="active">분석 결과 요약</div>
+            <div>사진 분석 결과</div>
+            <div>우수점 비교</div>
+            <div>개선 가이드</div>
+            <div>분석 이력</div>
+        </div>
+
+        <div class="bottom-box">
+            사진을 업로드하면 AI가 점포 문제를 진단하고 개선 솔루션을 제안합니다.
+        </div>
+
+    </div>
+
+    <!-- 메인 -->
+
+    <div class="main">
+
+        <!-- 상단 -->
+
+        <div class="top-header">
+
+            <div>
+                <div class="store-title">
+                    {{ result.store_name }}
+                </div>
+
+                <div class="store-meta">
+                    <div class="badge">{{ result.market_type }}</div>
+                    <div class="badge">{{ result.area_size }}</div>
+                </div>
+            </div>
+
+            <div class="top-buttons">
+                <button class="btn">분석 다시 하기</button>
+                <button class="btn primary">보고서 다운로드</button>
+            </div>
+
+        </div>
+
+        <!-- 종합 -->
+
+        <div class="card">
+
+            <div class="summary-grid">
+
+                <div>
+                    <div style="font-size:26px;font-weight:bold;margin-bottom:20px;">
+                        AI 종합 진단 점수
+                    </div>
+
+                    <div>
+                        <span class="score-big">{{ result.score }}</span>
+                        <span class="level">점</span>
+                    </div>
+
+                    <div class="desc">
+                        개선 여지가 있는 보통 수준의 점포입니다.<br>
+                        전략상품 노출과 연계 구매 개선이 필요합니다.
+                    </div>
+                </div>
+
+                <div>
+                    <div style="font-size:24px;font-weight:bold;margin-bottom:20px;">
+                        점수 구성 한눈에 보기
+                    </div>
+
+                    <img src="https://quickchart.io/chart?c={type:'radar',data:{labels:['전략상품','연계구매','카테고리','POP','동선'],datasets:[{label:'현재점포',data:[40,35,70,45,65]}]}}" width="100%">
+                </div>
+
+                <div>
+
+                    <div style="font-size:24px;font-weight:bold;margin-bottom:20px;">
+                        매대별 점수
+                    </div>
+
+                    <div class="score-bars">
+
+                        {% for s in result.scores %}
+
+                        <div class="bar-row">
+
+                            <div>{{ s.name }}</div>
+
+                            <div class="bar">
+                                <div class="bar-fill"
+                                     style="width:{{ s.score }}%; background:{{ s.color }}">
+                                </div>
+                            </div>
+
+                            <div>{{ s.score }}</div>
+
+                            <div style="color:{{ s.color }};font-weight:bold;">
+                                {{ s.level }}
+                            </div>
+
+                        </div>
+
+                        {% endfor %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- TOP3 -->
+
+        <div class="card">
+
+            <div style="font-size:28px;font-weight:bold;margin-bottom:24px;">
+                우선 개선 영역 TOP 3
+            </div>
+
+            <div class="top3">
+
+                {% for t in result.top3 %}
+
+                <div class="top-item">
+
+                    <div class="top-rank">
+                        {{ t.rank }}
+                    </div>
+
+                    <div style="font-size:24px;font-weight:bold;">
+                        {{ t.name }}
+                    </div>
+
+                    <div class="top-score">
+                        {{ t.score }}점
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+        <!-- 상세 -->
+
+        <div class="card">
+
+            <div style="font-size:30px;font-weight:bold;margin-bottom:26px;">
+                매대별 점수 상세 분석
+            </div>
+
+            <div class="detail-grid">
+
+                <!-- LEFT -->
+
+                <div class="detail-left">
+
+                    <div style="font-size:30px;font-weight:bold;">
+                        {{ result.detail.name }}
+                    </div>
+
+                    <div class="detail-score">
+                        {{ result.detail.score }}
+                    </div>
+
+                    <div class="detail-level">
+                        {{ result.detail.level }}
+                    </div>
+
+                </div>
+
+                <!-- TABLE -->
+
+                <div class="table">
+
+                    <table>
+
+                        <tr>
+                            <th>항목</th>
+                            <th>배점</th>
+                            <th>점수</th>
+                        </tr>
+
+                        {% for i in result.detail.score_items %}
+
+                        <tr>
+                            <td>{{ i.name }}</td>
+                            <td>{{ i.max }}</td>
+                            <td>{{ i.score }}</td>
+                        </tr>
+
+                        {% endfor %}
+
+                    </table>
+
+                </div>
+
+                <!-- 감점 -->
+
+                <div>
+
+                    <div style="font-size:24px;font-weight:bold;margin-bottom:20px;color:#ef4444;">
+                        감점 요인
+                    </div>
+
+                    {% for m in result.detail.minus %}
+
+                    <div class="issue">
+
+                        <div class="issue-title">
+                            {{ m.title }} ({{ m.score }})
+                        </div>
+
+                        <div>
+                            {{ m.desc }}
+                        </div>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+                <!-- 우수점 -->
+
+                <div>
+
+                    <div style="font-size:24px;font-weight:bold;margin-bottom:20px;color:#10b981;">
+                        우수점 기준
+                    </div>
+
+                    {% for r in result.detail.reference %}
+
+                    <div class="ref-item">
+                        ✓ {{ r }}
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- 사진 비교 -->
+
+        <div class="card">
+
+            <div style="font-size:30px;font-weight:bold;margin-bottom:28px;">
+                사진 비교 및 AI 개선 가이드
+            </div>
+
+            <div class="photo-grid">
+
+                <!-- before -->
+
+                <div class="photo-box">
+
+                    <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=1200&auto=format&fit=crop">
+
+                    <div class="photo-content">
+
+                        <div class="photo-title red">
+                            현재 점포
+                        </div>
+
+                        <ul>
+                            <li>전략상품이 후면 배치</li>
+                            <li>세트상품 구성이 부족</li>
+                            <li>POP 시인성 낮음</li>
+                        </ul>
+
+                    </div>
+
+                </div>
+
+                <!-- reference -->
+
+                <div class="photo-box">
+
+                    <img src="https://images.unsplash.com/photo-1517433670267-08bbd4be890f?q=80&w=1200&auto=format&fit=crop">
+
+                    <div class="photo-content">
+
+                        <div class="photo-title green">
+                            우수점 레퍼런스
+                        </div>
+
+                        <ul>
+                            <li>전략상품 전면 배치</li>
+                            <li>세트상품 집중 진열</li>
+                            <li>POP 시인성 우수</li>
+                        </ul>
+
+                    </div>
+
+                </div>
+
+                <!-- AI -->
+
+                <div class="photo-box">
+
+                    <img src="https://images.unsplash.com/photo-1488459716781-31db52582fe9?q=80&w=1200&auto=format&fit=crop">
+
+                    <div class="photo-content">
+
+                        <div class="photo-title blue">
+                            AI 개선 가이드
+                        </div>
+
+                        <ul>
+                            <li>전략상품 중앙 배치</li>
+                            <li>세트 상품 POP 추가</li>
+                            <li>가격 강조 POP 설치</li>
+                        </ul>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- 실행 -->
+
+        <div class="bottom-grid">
+
+            <div class="action-box green-box">
+
+                <div class="action-title">
+                    오늘 바로 실행
+                </div>
+
+                <ul>
+
+                    {% for a in result.actions_now %}
+
+                    <li>{{ a }}</li>
+
+                    {% endfor %}
+
+                </ul>
+
+            </div>
+
+            <div class="action-box blue-box">
+
+                <div class="action-title">
+                    1주 내 개선 권장
+                </div>
+
+                <ul>
+
+                    {% for a in result.actions_week %}
+
+                    <li>{{ a }}</li>
+
+                    {% endfor %}
+
+                </ul>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>
